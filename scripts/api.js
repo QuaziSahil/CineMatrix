@@ -136,72 +136,73 @@ const API = {
      */
     async getShowDetails(id) {
         try {
-            let tmdbID = null;
-            let imdbID = null;
-
             // Handle IMDB ID vs TMDB ID
             if (String(id).startsWith('tt')) {
-                imdbID = id;
-                // Resolve IMDB ID to TMDB ID first (needed for episodes/details)
-                const findData = await this.tmdbRequest(`/find/${imdbID}?external_source=imdb_id`);
+                // Primary: Fetch from OMDB (FAST)
+                const omdbData = await this.omdbRequest(`i=${id}&plot=short`);
+
+                if (omdbData.Response === 'True') {
+                    return {
+                        imdbID: id,
+                        tmdbID: null, // We'll fetch if needed, but OMDB has enough for the matrix
+                        title: omdbData.Title,
+                        year: omdbData.Year,
+                        poster: omdbData.Poster !== 'N/A' ? omdbData.Poster : null,
+                        imdbRating: omdbData.imdbRating !== 'N/A' ? parseFloat(omdbData.imdbRating) : null,
+                        imdbVotes: omdbData.imdbVotes !== 'N/A' ? omdbData.imdbVotes : null,
+                        totalSeasons: parseInt(omdbData.totalSeasons) || 1,
+                        status: omdbData.Type,
+                        source: 'IMDB'
+                    };
+                }
+
+                // If OMDB fails with ttID, resolve to TMDB as fallback
+                const findData = await this.tmdbRequest(`/find/${id}?external_source=imdb_id`);
                 if (findData.tv_results && findData.tv_results.length > 0) {
-                    tmdbID = findData.tv_results[0].id;
-                } else {
-                    throw new Error('Show found on IMDB but not on TMDB.');
+                    return this.getShowDetails(findData.tv_results[0].id);
                 }
             } else {
-                tmdbID = id;
-            }
+                // Secondary: Fetch from TMDB if we only have TMDB ID
+                const tmdbData = await this.tmdbRequest(`/tv/${id}?language=en-US`);
+                const extData = await this.tmdbRequest(`/tv/${id}/external_ids`);
+                const imdbID = extData.imdb_id;
 
-            // Get TMDB details (parallel requests)
-            const requests = [this.tmdbRequest(`/tv/${tmdbID}?language=en-US`)];
-            if (!imdbID) {
-                requests.push(this.tmdbRequest(`/tv/${tmdbID}/external_ids`));
-            }
-
-            const results = await Promise.all(requests);
-            const tmdbData = results[0];
-            if (!imdbID) {
-                imdbID = results[1].imdb_id;
-            }
-
-            // Build year display
-            const startYear = tmdbData.first_air_date ? tmdbData.first_air_date.substring(0, 4) : '';
-            const endYear = tmdbData.last_air_date ? tmdbData.last_air_date.substring(0, 4) : '';
-            const yearDisplay = tmdbData.status === 'Ended' || tmdbData.status === 'Canceled'
-                ? (startYear === endYear ? startYear : `${startYear}–${endYear}`)
-                : `${startYear}–`;
-
-            // Try OMDB for IMDB rating (PRIORITY)
-            let ratingValue = tmdbData.vote_average;
-            let votesValue = tmdbData.vote_count ? tmdbData.vote_count.toLocaleString() : null;
-            let source = 'TMDB';
-
-            if (imdbID) {
-                try {
-                    const omdbData = await this.omdbRequest(`i=${imdbID}&plot=short`);
-                    if (omdbData && omdbData.Response !== 'False' && omdbData.imdbRating !== 'N/A') {
-                        ratingValue = parseFloat(omdbData.imdbRating);
-                        votesValue = omdbData.imdbVotes;
-                        source = 'IMDB';
-                    }
-                } catch (e) {
-                    console.log('OMDB failed, falling back to TMDB for main rating');
+                // If we got an IMDB ID, try to enrich with OMDB data
+                if (imdbID) {
+                    try {
+                        const omdbData = await this.omdbRequest(`i=${imdbID}`);
+                        if (omdbData.Response === 'True') {
+                            return {
+                                imdbID: imdbID,
+                                tmdbID: id,
+                                title: omdbData.Title,
+                                year: omdbData.Year,
+                                poster: omdbData.Poster !== 'N/A' ? omdbData.Poster : (tmdbData.poster_path ? `${this.TMDB_IMAGE}/w342${tmdbData.poster_path}` : null),
+                                imdbRating: omdbData.imdbRating !== 'N/A' ? parseFloat(omdbData.imdbRating) : null,
+                                imdbVotes: omdbData.imdbVotes !== 'N/A' ? omdbData.imdbVotes : null,
+                                totalSeasons: parseInt(omdbData.totalSeasons) || 1,
+                                status: omdbData.Type,
+                                source: 'IMDB'
+                            };
+                        }
+                    } catch (e) { console.log('OMDB enrichment failed'); }
                 }
-            }
 
-            return {
-                imdbID: imdbID || tmdbID,
-                tmdbID: tmdbID,
-                title: tmdbData.name,
-                year: yearDisplay,
-                poster: tmdbData.poster_path ? `${this.TMDB_IMAGE}/w342${tmdbData.poster_path}` : null,
-                imdbRating: ratingValue,
-                imdbVotes: votesValue,
-                totalSeasons: tmdbData.number_of_seasons || 1,
-                status: tmdbData.status,
-                source: source
-            };
+                // Fallback to pure TMDB data
+                return {
+                    imdbID: imdbID || id,
+                    tmdbID: id,
+                    title: tmdbData.name,
+                    year: tmdbData.first_air_date ? `${tmdbData.first_air_date.substring(0, 4)}–` : 'N/A',
+                    poster: tmdbData.poster_path ? `${this.TMDB_IMAGE}/w342${tmdbData.poster_path}` : null,
+                    imdbRating: tmdbData.vote_average,
+                    imdbVotes: tmdbData.vote_count ? tmdbData.vote_count.toLocaleString() : null,
+                    totalSeasons: tmdbData.number_of_seasons || 1,
+                    status: tmdbData.status,
+                    source: 'TMDB'
+                };
+            }
+            throw new Error('Show details not found.');
         } catch (error) {
             console.error('Get show details error:', error);
             throw new Error(error.message || 'Failed to get show details.');
@@ -215,47 +216,33 @@ const API = {
         const { imdbID, tmdbID } = showData;
 
         try {
-            // Get TMDB episode data first (always available)
-            const tmdbSeason = await this.tmdbRequest(`/tv/${tmdbID}/season/${season}?language=en-US`);
-            const tmdbEpisodes = tmdbSeason.episodes || [];
-
-            // Try to get OMDB/IMDB ratings if we have IMDB ID
-            let omdbEpisodes = [];
-            if (imdbID && typeof imdbID === 'string' && imdbID.startsWith('tt')) {
-                try {
-                    const omdbData = await this.omdbRequest(`i=${imdbID}&Season=${season}`);
-                    if (omdbData.Response === 'True' && omdbData.Episodes) {
-                        omdbEpisodes = omdbData.Episodes;
-                    }
-                } catch (e) {
-                    console.log('OMDB episode fetch failed, using TMDB');
+            // Priority: Try OMDB for everything (FAST)
+            if (imdbID && String(imdbID).startsWith('tt')) {
+                const omdbData = await this.omdbRequest(`i=${imdbID}&Season=${season}`);
+                if (omdbData.Response === 'True' && omdbData.Episodes) {
+                    return omdbData.Episodes.map(ep => ({
+                        episodeNumber: parseInt(ep.Episode),
+                        title: ep.Title,
+                        released: ep.Released,
+                        imdbRating: ep.imdbRating !== 'N/A' ? parseFloat(ep.imdbRating) : null,
+                        source: 'IMDB'
+                    }));
                 }
             }
 
-            // Merge: Use IMDB rating if available, otherwise TMDB
-            return tmdbEpisodes.map(ep => {
-                const omdbEp = omdbEpisodes.find(o => parseInt(o.Episode) === ep.episode_number);
-
-                // IMDB rating takes priority
-                let rating = null;
-                let source = 'TMDB';
-
-                if (omdbEp && omdbEp.imdbRating !== 'N/A') {
-                    rating = parseFloat(omdbEp.imdbRating);
-                    source = 'IMDB';
-                } else if (ep.vote_average && ep.vote_count > 0) {
-                    rating = parseFloat(ep.vote_average.toFixed(1));
-                    source = 'TMDB';
-                }
-
-                return {
+            // Fallback: Use TMDB if OMDB fails
+            if (tmdbID) {
+                const tmdbSeason = await this.tmdbRequest(`/tv/${tmdbID}/season/${season}?language=en-US`);
+                return (tmdbSeason.episodes || []).map(ep => ({
                     episodeNumber: ep.episode_number,
                     title: ep.name,
                     released: ep.air_date,
-                    imdbRating: rating,
-                    source: source
-                };
-            });
+                    imdbRating: ep.vote_average,
+                    source: 'TMDB'
+                }));
+            }
+
+            return [];
         } catch (error) {
             console.error('Get season episodes error:', error);
             return [];
