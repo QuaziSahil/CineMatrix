@@ -16,9 +16,9 @@ const API = {
     /**
      * Make TMDB API request with timeout
      */
-    async tmdbRequest(endpoint) {
+    async tmdbRequest(endpoint, retries = 2) {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout (faster)
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
         try {
             const response = await fetch(`${this.TMDB_URL}${endpoint}`, {
@@ -31,6 +31,11 @@ const API = {
             clearTimeout(timeout);
 
             if (!response.ok) {
+                // Retry for 5xx errors or rate limiting
+                if (retries > 0 && (response.status >= 500 || response.status === 429)) {
+                    await new Promise(r => setTimeout(r, 1000));
+                    return this.tmdbRequest(endpoint, retries - 1);
+                }
                 const errorText = await response.text();
                 console.error('TMDB API Error:', response.status, errorText);
                 throw new Error(`TMDB Error: ${response.status}`);
@@ -38,6 +43,11 @@ const API = {
             return response.json();
         } catch (error) {
             clearTimeout(timeout);
+            if (retries > 0 && (error.name === 'AbortError' || error.name === 'TypeError')) {
+                // Retry for timeouts or network errors
+                await new Promise(r => setTimeout(r, 1000));
+                return this.tmdbRequest(endpoint, retries - 1);
+            }
             if (error.name === 'AbortError') {
                 throw new Error('Request timeout - check your connection or VPN');
             }
@@ -51,14 +61,14 @@ const API = {
     /**
      * Make OMDB API request with timeout and caching
      */
-    async omdbRequest(params) {
+    async omdbRequest(params, retries = 2) {
         // Check cache first
         if (this._cache.has(params)) {
             return this._cache.get(params);
         }
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout (same as TMDB)
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
         try {
             const url = `${this.OMDB_URL}?apikey=${this.OMDB_KEY}&${params}`;
@@ -73,6 +83,10 @@ const API = {
             return data;
         } catch (error) {
             clearTimeout(timeout);
+            if (retries > 0 && (error.name === 'AbortError' || error.name === 'TypeError')) {
+                await new Promise(r => setTimeout(r, 1000));
+                return this.omdbRequest(params, retries - 1);
+            }
             return { Response: 'False', Error: 'Request failed' };
         }
     },

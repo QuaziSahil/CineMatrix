@@ -189,20 +189,26 @@ const App = {
             // Render show info
             UI.renderShowInfo(showDetails);
 
-            // Load ALL seasons data at once for multi-column display
+            // Load ALL seasons data
             const totalSeasons = showDetails.totalSeasons || 1;
+            const allSeasons = [];
 
-            // Fetch all seasons in parallel for faster loading
-            const seasonPromises = [];
+            // For shows with many seasons, load them sequentially (or in small batches)
+            // to avoid saturating connections and causing timeouts
             for (let i = 1; i <= totalSeasons; i++) {
-                seasonPromises.push(
-                    API.getSeasonEpisodes(showDetails, i)
-                        .then(episodes => ({ seasonNumber: i, episodes }))
-                        .catch(() => ({ seasonNumber: i, episodes: [] }))
-                );
+                try {
+                    // Small delay every few seasons to be gentle on the connection
+                    if (i > 1 && i % 3 === 1) {
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+                    const episodes = await API.getSeasonEpisodes(showDetails, i);
+                    allSeasons.push({ seasonNumber: i, episodes });
+                } catch (e) {
+                    console.error(`Failed to load season ${i}:`, e);
+                    allSeasons.push({ seasonNumber: i, episodes: [] });
+                }
             }
 
-            const allSeasons = await Promise.all(seasonPromises);
             this.state.seasonsData = allSeasons.sort((a, b) => a.seasonNumber - b.seasonNumber);
 
             // Render all seasons in multi-column grid
