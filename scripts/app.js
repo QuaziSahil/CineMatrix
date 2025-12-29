@@ -182,8 +182,8 @@ const App = {
         UI.showLoading();
 
         try {
-            // Fetch show details
-            const showDetails = await API.getShowDetails(showId);
+            // Fetch show details (passing title for faster OMDB resolution)
+            const showDetails = await API.getShowDetails(showId, title);
             this.state.currentShow = showDetails;
 
             // Render show info
