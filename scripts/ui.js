@@ -328,62 +328,46 @@ const UI = {
     },
 
     /**
-     * Render all seasons ratings in MATRIX layout (episodes as rows, seasons as columns)
+     * Render all seasons ratings in MATRIX layout (each season as its own column)
      * @param {Array} seasonsData - Array of season objects with episodes
      */
     renderAllSeasonsGrid(seasonsData) {
-        // Find max episodes across all seasons
-        const maxEpisodes = Math.max(...seasonsData.map(s => s.episodes.length));
+        // Filter out empty seasons (no episodes)
+        const validSeasons = seasonsData.filter(s => s.episodes && s.episodes.length > 0);
 
-        // Configuration for splitting
-        const CHUNK_SIZE = 20;
-        const totalChunks = Math.ceil(maxEpisodes / CHUNK_SIZE);
+        if (validSeasons.length === 0) {
+            this.elements.ratingsGrid.innerHTML = '<div class="no-data">No episode data available</div>';
+            return;
+        }
 
         let html = '<div class="matrix-wrapper">';
 
-        for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
-            const startEp = chunkIdx * CHUNK_SIZE + 1;
-            const endEp = Math.min((chunkIdx + 1) * CHUNK_SIZE, maxEpisodes);
-
+        // Each season is its own column
+        validSeasons.forEach(season => {
             html += '<div class="matrix-grid">';
 
-            // Build season headers row for this chunk
-            html += '<div class="matrix-header">';
-            seasonsData.forEach((season) => {
-                html += `<div class="season-label">S${season.seasonNumber}</div>`;
-            });
-            html += '</div>';
+            // Season header
+            html += `<div class="matrix-header"><div class="season-label">Season ${season.seasonNumber}</div></div>`;
 
-            // Build episode rows for this chunk
-            for (let epNum = startEp; epNum <= endEp; epNum++) {
+            // Episode rows for this season
+            season.episodes.forEach(episode => {
+                const category = API.getRatingCategory(episode.imdbRating);
+                const ratingText = episode.imdbRating !== null
+                    ? episode.imdbRating.toFixed(1)
+                    : 'N/A';
+                const cellClass = episode.imdbRating !== null
+                    ? category.class.replace('rating-', '')
+                    : 'na';
+
+                const tooltip = `${episode.title || 'No Title'} (${ratingText})`;
                 html += `<div class="matrix-row">`;
-                html += `<span class="episode-label">E${epNum}</span>`;
+                html += `<span class="episode-label">E${episode.episodeNumber}</span>`;
+                html += `<div class="matrix-cell ${cellClass}" title="${tooltip}">${ratingText}</div>`;
+                html += `</div>`;
+            });
 
-                seasonsData.forEach(season => {
-                    const episode = season.episodes.find(ep => ep.episodeNumber === epNum);
-
-                    if (episode) {
-                        const category = API.getRatingCategory(episode.imdbRating);
-                        const ratingText = episode.imdbRating !== null
-                            ? episode.imdbRating.toFixed(1)
-                            : 'N/A';
-                        const cellClass = episode.imdbRating !== null
-                            ? category.class.replace('rating-', '')
-                            : 'na';
-
-                        // Tooltip with title and rating
-                        const tooltip = `${episode.title || 'No Title'} (${ratingText})`;
-                        html += `<div class="matrix-cell ${cellClass}" title="${tooltip}">${ratingText}</div>`;
-                    } else {
-                        // Empty cell for seasons that don't have this episode
-                        html += `<div class="matrix-cell na">-</div>`;
-                    }
-                });
-
-                html += '</div>';
-            }
             html += '</div>'; // End matrix-grid
-        }
+        });
 
         html += '</div>'; // End matrix-wrapper
 

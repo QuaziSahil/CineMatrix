@@ -17,18 +17,14 @@ const API = {
      * Make TMDB API request with timeout
      */
     async tmdbRequest(endpoint, retries = 2) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
         try {
+            console.log(`[CineMatrix] Fetching TMDB: ${endpoint}`); // Debug log
             const response = await fetch(`${this.TMDB_URL}${endpoint}`, {
                 headers: {
                     'Authorization': `Bearer ${this.TMDB_TOKEN}`,
                     'accept': 'application/json'
-                },
-                signal: controller.signal
+                }
             });
-            clearTimeout(timeout);
 
             if (!response.ok) {
                 // Retry for 5xx errors or rate limiting
@@ -37,19 +33,18 @@ const API = {
                     return this.tmdbRequest(endpoint, retries - 1);
                 }
                 const errorText = await response.text();
+                // If 429, we still throw to handled logic
+                if (response.status === 429) throw new Error('429 Too Many Requests');
+
                 console.error('TMDB API Error:', response.status, errorText);
                 throw new Error(`TMDB Error: ${response.status}`);
             }
             return response.json();
         } catch (error) {
-            clearTimeout(timeout);
-            if (retries > 0 && (error.name === 'AbortError' || error.name === 'TypeError')) {
-                // Retry for timeouts or network errors
+            if (retries > 0) {
+                // Retry for network errors
                 await new Promise(r => setTimeout(r, 1000));
                 return this.tmdbRequest(endpoint, retries - 1);
-            }
-            if (error.name === 'AbortError') {
-                throw new Error('Request timeout - check your connection or VPN');
             }
             throw error;
         }
@@ -67,13 +62,10 @@ const API = {
             return this._cache.get(params);
         }
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
         try {
             const url = `${this.OMDB_URL}?apikey=${this.OMDB_KEY}&${params}`;
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeout);
+            console.log(`[CineMatrix] Fetching OMDB: ${params}`); // Debug log
+            const response = await fetch(url);
             const data = await response.json();
 
             // Cache successful responses
@@ -82,8 +74,8 @@ const API = {
             }
             return data;
         } catch (error) {
-            clearTimeout(timeout);
-            if (retries > 0 && (error.name === 'AbortError' || error.name === 'TypeError')) {
+            console.error(`[CineMatrix] OMDB Failed:`, error);
+            if (retries > 0) {
                 await new Promise(r => setTimeout(r, 1000));
                 return this.omdbRequest(params, retries - 1);
             }
@@ -131,7 +123,10 @@ const API = {
             return [];
         } catch (error) {
             console.error('Search error:', error);
-            return [];
+            if (error.message.includes('429')) {
+                throw new Error('Too many requests. Please wait a moment.');
+            }
+            throw new Error('Search failed. Please check your connection.');
         }
     },
 

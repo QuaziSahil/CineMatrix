@@ -96,6 +96,11 @@ const Download = {
                     if (clonedCard) {
                         clonedCard.style.transform = 'none';
                         clonedCard.style.borderRadius = '16px';
+                        // CRITICAL: Force the cloned card to be as wide as it needs to be
+                        // This prevents it from wrapping vertical on small screens during capture
+                        clonedCard.style.width = 'fit-content';
+                        clonedCard.style.minWidth = '1000px';
+                        clonedCard.style.maxWidth = 'none';
                     }
                 }
             };

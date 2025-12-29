@@ -463,15 +463,26 @@
     display: flex;
     justify-content: center;
     padding: var(--spacing-md);
+    overflow-x: auto;
+    /* Allow horizontal scroll */
+    align-items: flex-start;
+    /* Align to top */
 }
 
 .graph-card {
     background: var(--bg-primary);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
-    max-width: 540px;
-    width: 100%;
+    width: fit-content;
+    /* Allow growing wide */
+    min-width: 100%;
+    /* Start at full width of container */
+    max-width: none;
+    /* SQL-like: Remove strict limits */
+    transition: max-width var(--transition-normal);
 }
+
+/* Mobile restriction removed to allow horizontal scrolling */
 
 /* LEGEND AT TOP - BIGGER */
 .legend.legend-top {
@@ -1182,13 +1193,16 @@
     color: var(--bg-primary);
 }
 
-/* RIGHT Column - Legend & Grid */
+/* RIGHT Column - Legend & Grid (Scrollable) */
 .graph-right {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-    min-width: 0;
+    overflow-x: auto;
+    /* Enable horizontal scroll for wide grids */
+    padding-bottom: var(--spacing-sm);
 }
 
 /* Horizontal Legend Bar */
@@ -1218,13 +1232,20 @@
 }
 
 /* Matrix Grid - Episodes as rows, Seasons as columns */
+/* Matrix Grid - Episodes as rows, Seasons as columns */
 .matrix-wrapper {
-    display: flex;
-    flex-direction: row;
+    display: grid !important;
+    grid-auto-flow: column !important;
+    /* FORCE horizontal layout */
+    grid-auto-columns: max-content !important;
     gap: var(--spacing-xl);
-    flex-wrap: wrap;
-    justify-content: center;
+    justify-content: start;
+    align-items: start;
+    /* Align columns to top */
+
     width: 100%;
+    overflow-x: auto;
+    padding-bottom: var(--spacing-md);
 }
 
 .matrix-grid {
@@ -1232,6 +1253,8 @@
     flex-direction: column;
     gap: 2px;
     flex-shrink: 0;
+    width: fit-content;
+    align-self: flex-start;
 }
 
 .matrix-header {
