@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="CineMatrix - Generate beautiful episode rating graphs for any TV show using IMDB & TMDB data. Download as PNG, JPG, or WebP.">
+    <meta name="keywords"
+        content="TV series ratings, IMDB ratings, episode ratings, cinematrix, series graph, TV show visualization">
+    <meta name="author" content="Quazi Sahil Mahammad (QSM)">
+
+    <title>CineMatrix - TV Show Episode Ratings Visualizer</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8144222817767750"
+        crossorigin="anonymous"></script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+
+    <!-- html2canvas for image export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo" onclick="location.reload()">
+                <div class="logo-icon-grid">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="logo-text">Cine<span class="logo-highlight">Matrix</span></span>
+            </div>
+
+            <nav class="nav">
+                <button class="nav-btn" id="aboutBtn">
+                    <span class="nav-icon">ℹ️</span>
+                    <span class="nav-label">About</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1 class="hero-title">Visualize TV Show Ratings</h1>
+            <p class="hero-subtitle">Generate beautiful episode rating graphs for any show and download them as images
+            </p>
+
+            <!-- Search Box -->
+            <div class="search-container">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search for a TV show..."
+                        autocomplete="off">
+                    <button class="search-clear" id="clearSearch" style="display: none;">✕</button>
+                </div>
+
+                <!-- Search Suggestions -->
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
+
+            <!-- Recent Searches -->
+            <div class="recent-searches" id="recentSearches">
+                <span class="recent-label">Recent:</span>
+                <div class="recent-tags" id="recentTags"></div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Fetching show data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-container" id="errorContainer" style="display: none;">
+            <span class="error-icon">😕</span>
+            <p class="error-text" id="errorText">Something went wrong</p>
+            <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
+        </div>
+
+        <!-- Results Section -->
+        <section class="results" id="resultsSection" style="display: none;">
+            <!-- Season Tabs -->
+            <div class="season-tabs-container">
+                <div class="season-tabs" id="seasonTabs"></div>
+            </div>
+
+            <!-- Graph Card (for export) -->
+            <div class="graph-card-wrapper">
+                <div class="graph-card" id="graphCard">
+                    <!-- Two-Column Layout -->
+                    <div class="graph-layout">
+                        <!-- LEFT: Show Info -->
+                        <div class="graph-left">
+                            <div class="show-poster-container">
+                                <img src="" alt="" class="show-poster" id="showPoster">
+                            </div>
+                            <div class="show-meta">
+                                <div class="show-rating-display">
+                                    <span class="rating-star">★</span>
+                                    <span class="rating-value" id="showRating">8.5</span>
+                                    <span class="rating-votes" id="showVotes">(46,047)</span>
+                                    <span class="rating-source-tag" id="ratingSource">IMDB</span>
+                                </div>
+                                <h2 class="show-title" id="showTitle">Show Title</h2>
+                                <p class="show-year" id="showYear">2017 - now</p>
+                                <button class="save-btn" id="saveImageBtn">
+                                    <span>↓</span> Save as image
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Legend + Grid -->
+                        <div class="graph-right">
+                            <!-- Horizontal Legend -->
+                            <div class="legend-bar">
+                                <div class="legend-item">
+                                    <span class="legend-dot absolute-cinema"></span>
+                                    <span class="legend-label">Absolute Cinema</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot awesome"></span>
+                                    <span class="legend-label">Awesome</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot great"></span>
+                                    <span class="legend-label">Great</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot good"></span>
+                                    <span class="legend-label">Good</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot regular"></span>
+                                    <span class="legend-label">Regular</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot bad"></span>
+                                    <span class="legend-label">Bad</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot garbage"></span>
+                                    <span class="legend-label">Garbage</span>
+                                </div>
+                            </div>
+
+                            <!-- Matrix Grid (Episodes as rows, Seasons as columns) -->
+                            <div class="matrix-grid" id="ratingsGrid"></div>
+
+                            <!-- Data Warning -->
+                            <div class="data-warning" id="dataWarning" style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Branding Footer -->
+                    <div class="branding">
+                        <div class="branding-logo-grid">
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span class="branding-text">CINEMATRIX</span>
+                        <span class="branding-divider">|</span>
+                        <a href="https://github.com/QuaziSahil/CineMatrix" target="_blank"
+                            class="branding-url">github.com/QuaziSahil/CineMatrix</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download Actions -->
+            <div class="download-actions">
+                <div class="download-format">
+                    <label class="format-label">Format:</label>
+                    <select id="downloadFormat" class="format-select">
+                        <option value="png">PNG (Best Quality)</option>
+                        <option value="jpeg">JPG (Smaller Size)</option>
+                        <option value="webp">WebP (Modern)</option>
+                    </select>
+                </div>
+                <button class="btn btn-download" id="downloadBtn">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-text">Download Image</span>
+                </button>
+                <button class="btn btn-share" id="shareBtn">
+                    <span class="btn-icon">🔗</span>
+                    <span class="btn-text">Share</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- About Modal -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal">
+            <button class="modal-close" id="closeModal">✕</button>
+            <div class="modal-content">
+                <div class="modal-logo-grid">
+                    <span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                </div>
+                <h2 class="modal-title">CineMatrix</h2>
+                <p class="modal-version">Version 1.1</p>
+
+                <div class="modal-section">
+                    <h3>About</h3>
+                    <p>CineMatrix is a professional visualization tool that transforms series rating data into
+                        beautiful,
+                        color-coded matrix grids. Built for fans who appreciate both data and cinema.</p>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Features</h3>
+                    <ul class="feature-list">
+                        <li>🔍 Search any TV show (comprehensive database)</li>
+                        <li>⭐ IMDB ratings with TMDB fallback</li>
+                        <li>📊 Visual episode ratings with color coding</li>
+                        <li>📥 Download as PNG, JPG, or WebP</li>
+                        <li>📱 Mobile-friendly responsive design</li>
+                    </ul>
+                </div>
+
+                <div class="modal-section creator">
+                    <h3>Created By</h3>
+                    <div class="creator-info">
+                        <span class="creator-badge">QSM</span>
+                        <span class="creator-name">Quazi Sahil Mahammad</span>
+                    </div>
+                </div>
+
+                <div class="modal-section data-sources">
+                    <div class="sources-row">
+                        <span class="source-badge imdb">IMDB</span>
+                        <span class="source-badge tmdb">TMDB</span>
+                        <span class="sources-text">Ratings powered by IMDB & TMDB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message" id="toastMessage">Success!</span>
+    </div>
+
+    <!-- Scripts (cache-busted) -->
+    <script src="scripts/api.js?v=6"></script>
+    <script src="scripts/ui.js?v=6"></script>
+    <script src="scripts/download.js?v=6"></script>
+    <script src="scripts/app.js?v=6"></script>
+</body>
+
+</html>

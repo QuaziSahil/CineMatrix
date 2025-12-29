@@ -1,0 +1,358 @@
+/* ===========================
+   CineMatrix - Responsive
+   =========================== */
+
+/* Tablet - 768px */
+@media (max-width: 768px) {
+    .header-container {
+        padding: var(--spacing-md);
+    }
+
+    .logo-text {
+        font-size: 1.25rem;
+    }
+
+    .nav-label {
+        display: none;
+    }
+
+    .nav-btn {
+        padding: var(--spacing-sm);
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .hero {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .hero-title {
+        font-size: 1.875rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .search-box {
+        padding: var(--spacing-md);
+    }
+
+    .search-input {
+        font-size: 1rem;
+    }
+
+    .graph-card {
+        padding: var(--spacing-lg);
+    }
+
+    .show-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .show-details {
+        align-items: center;
+    }
+
+    .show-poster {
+        width: 160px;
+        height: 230px;
+    }
+
+    .show-title {
+        font-size: 1.5rem;
+    }
+
+    .legend {
+        gap: var(--spacing-sm);
+    }
+
+    .legend-label {
+        font-size: 0.6875rem;
+    }
+
+    .download-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .download-format {
+        justify-content: center;
+    }
+
+    .btn-download,
+    .btn-share {
+        width: 100%;
+    }
+
+    .season-tabs-container {
+        justify-content: flex-start;
+        padding: 0 var(--spacing-md);
+    }
+
+    .season-tabs {
+        gap: var(--spacing-xs);
+    }
+
+    .season-tab {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.8125rem;
+    }
+}
+
+/* Mobile - 480px */
+@media (max-width: 480px) {
+    :root {
+        --spacing-lg: 20px;
+        --spacing-xl: 24px;
+    }
+
+    .main {
+        padding: var(--spacing-md);
+    }
+
+    .hero-title {
+        font-size: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9375rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .search-box {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .search-icon {
+        font-size: 1rem;
+        margin-right: var(--spacing-sm);
+    }
+
+    .search-input {
+        font-size: 0.9375rem;
+    }
+
+    .recent-searches {
+        flex-direction: column;
+    }
+
+    .graph-card {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+    }
+
+    .graph-card-wrapper {
+        padding: var(--spacing-sm);
+    }
+
+    .show-poster {
+        width: 120px;
+        height: 170px;
+    }
+
+    .show-title {
+        font-size: 1.25rem;
+    }
+
+    .show-rating {
+        justify-content: center;
+    }
+
+    .rating-value {
+        font-size: 1.125rem;
+    }
+
+    .episode-rating {
+        min-width: 44px;
+        height: 36px;
+        font-size: 0.9375rem;
+    }
+
+    .episode-label {
+        width: 32px;
+        font-size: 0.75rem;
+    }
+
+    .legend {
+        padding: var(--spacing-sm) 0;
+    }
+
+    .legend-item {
+        gap: 2px;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+    }
+
+    .legend-label {
+        font-size: 0.625rem;
+    }
+
+    .branding {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+
+    .branding-text {
+        font-size: 0.75rem;
+    }
+
+    .branding-url {
+        width: 100%;
+        text-align: center;
+    }
+
+    .modal {
+        padding: var(--spacing-lg);
+        margin: var(--spacing-md);
+    }
+
+    .modal-logo {
+        font-size: 2.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+    }
+
+    .creator-info {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .creator-badge {
+        width: 56px;
+        height: 56px;
+        font-size: 1rem;
+    }
+
+    .format-select {
+        width: 100%;
+    }
+
+    .suggestion-item {
+        padding: var(--spacing-sm);
+    }
+
+    .suggestion-poster {
+        width: 32px;
+        height: 45px;
+    }
+
+    .suggestion-title {
+        font-size: 0.875rem;
+    }
+
+    .toast {
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+        transform: translateX(0) translateY(100px);
+    }
+
+    .toast.active {
+        transform: translateX(0) translateY(0);
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+    .nav-btn,
+    .btn,
+    .season-tab,
+    .search-clear,
+    .modal-close,
+    .recent-tag,
+    .suggestion-item {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .episode-rating {
+        min-height: 44px;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero {
+        padding: var(--spacing-md) 0;
+    }
+
+    .hero-title {
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .hero-subtitle {
+        display: none;
+    }
+}
+
+/* Large Screens */
+@media (min-width: 1200px) {
+    .hero-title {
+        font-size: 3rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .search-box {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .search-input {
+        font-size: 1.25rem;
+    }
+}
+
+/* High DPI Screens */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    .show-poster {
+        image-rendering: -webkit-optimize-contrast;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+
+    .header,
+    .search-container,
+    .recent-searches,
+    .season-tabs-container,
+    .download-actions,
+    .modal-overlay,
+    .toast {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .graph-card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
