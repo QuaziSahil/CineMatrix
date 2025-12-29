@@ -1,5 +1,5 @@
 /* ===========================
-   SeriesGraph - UI Module
+   CineMatrix - UI Module
    DOM Manipulation & Rendering
    =========================== */
 
@@ -335,38 +335,57 @@ const UI = {
         // Find max episodes across all seasons
         const maxEpisodes = Math.max(...seasonsData.map(s => s.episodes.length));
 
-        // Build season headers row
-        let html = '<div class="matrix-header">';
-        seasonsData.forEach((season, idx) => {
-            html += `<div class="season-label">S${season.seasonNumber}</div>`;
-        });
-        html += '</div>';
+        // Configuration for splitting
+        const CHUNK_SIZE = 20;
+        const totalChunks = Math.ceil(maxEpisodes / CHUNK_SIZE);
 
-        // Build episode rows
-        for (let epNum = 1; epNum <= maxEpisodes; epNum++) {
-            html += `<div class="matrix-row">`;
-            html += `<span class="episode-label">E${epNum}</span>`;
+        let html = '<div class="matrix-wrapper">';
 
-            seasonsData.forEach(season => {
-                const episode = season.episodes.find(ep => ep.episodeNumber === epNum);
+        for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+            const startEp = chunkIdx * CHUNK_SIZE + 1;
+            const endEp = Math.min((chunkIdx + 1) * CHUNK_SIZE, maxEpisodes);
 
-                if (episode) {
-                    const category = API.getRatingCategory(episode.imdbRating);
-                    const ratingText = episode.imdbRating !== null
-                        ? episode.imdbRating.toFixed(1)
-                        : 'N/A';
-                    const cellClass = episode.imdbRating !== null
-                        ? category.class.replace('rating-', '')
-                        : 'na';
-                    html += `<div class="matrix-cell ${cellClass}" title="${episode.title}">${ratingText}</div>`;
-                } else {
-                    // Empty cell for seasons that don't have this episode
-                    html += `<div class="matrix-cell na">-</div>`;
-                }
+            html += '<div class="matrix-grid">';
+
+            // Build season headers row for this chunk
+            html += '<div class="matrix-header">';
+            seasonsData.forEach((season) => {
+                html += `<div class="season-label">S${season.seasonNumber}</div>`;
             });
-
             html += '</div>';
+
+            // Build episode rows for this chunk
+            for (let epNum = startEp; epNum <= endEp; epNum++) {
+                html += `<div class="matrix-row">`;
+                html += `<span class="episode-label">E${epNum}</span>`;
+
+                seasonsData.forEach(season => {
+                    const episode = season.episodes.find(ep => ep.episodeNumber === epNum);
+
+                    if (episode) {
+                        const category = API.getRatingCategory(episode.imdbRating);
+                        const ratingText = episode.imdbRating !== null
+                            ? episode.imdbRating.toFixed(1)
+                            : 'N/A';
+                        const cellClass = episode.imdbRating !== null
+                            ? category.class.replace('rating-', '')
+                            : 'na';
+
+                        // Tooltip with title and rating
+                        const tooltip = `${episode.title || 'No Title'} (${ratingText})`;
+                        html += `<div class="matrix-cell ${cellClass}" title="${tooltip}">${ratingText}</div>`;
+                    } else {
+                        // Empty cell for seasons that don't have this episode
+                        html += `<div class="matrix-cell na">-</div>`;
+                    }
+                });
+
+                html += '</div>';
+            }
+            html += '</div>'; // End matrix-grid
         }
+
+        html += '</div>'; // End matrix-wrapper
 
         this.elements.ratingsGrid.innerHTML = html;
 

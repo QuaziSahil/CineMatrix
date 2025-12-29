@@ -1218,10 +1218,20 @@
 }
 
 /* Matrix Grid - Episodes as rows, Seasons as columns */
+.matrix-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
 .matrix-grid {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex-shrink: 0;
 }
 
 .matrix-header {
